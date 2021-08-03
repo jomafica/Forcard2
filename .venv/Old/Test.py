@@ -1,24 +1,10 @@
-from handleconn import HandleConnection
-from bs4 import BeautifulSoup
-import json
-import re
-
-
-class Article():
-
-    isAlive = True
-
-    def __init__(self, body=None):
-        self.body = body
-        #self.isAlive = isAlive
-
-def main():
-    domain='https://pplware.sapo.pt/gadgets/hardware/amd-anuncia-a-sua-grafica-radeon-rx-6600-xt-por-379-dolares/'
-    fetch_body=HandleConnection(domain).start()
-    x = Article(body=fetch_body)
-
 
     # Test (apagar)
+    #oldSet = {'786420', '786353', '786347', '786301', '786335'}
+    #currentSet = {'786425', '786424', '786422', '786421', '786420', '786353', '786347', '786301', '786335'}
+    #z = currentSet.difference(oldSet)
+    #print(z)
+    ################################################
     #yz = BeautifulSoup(fetch_body, 'html.parser')
     #y = [yz.find_all("article")[0]]
     #print(y)

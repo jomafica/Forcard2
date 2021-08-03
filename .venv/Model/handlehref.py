@@ -1,5 +1,4 @@
 from bs4 import BeautifulSoup
-import json
 import re    
     
 class HandleHref: 
@@ -28,13 +27,14 @@ class HandleHref:
             for link in _href:
                 return self.get_article_html_body(link)
 
-    def compare_id(self):
-        #check if the last id is the last
-        pass
-
+    # Return: {'786424', '786421', '786425'}
+    def compare_id(self, old_set, current_set):
+        return current_set.difference(old_set)
+    
+    #Try to find a meaning for this
     def is_not_last_id(self):
         pass
 
 
 
-    
+        
