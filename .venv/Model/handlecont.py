@@ -6,20 +6,34 @@ import re
 
 class Article():
 
-    def __init__(self, body=None):
+    def __init__(self, body, set_id_href):
         self.body = body
+        self.set_id_href = set_id_href
     
-    def retunr_content(self):
-        return self.body
+
+
+
+
+
+
+
+
+    def check_if_works(self):
+        return self.body, self.set_id_href
 
 
 domain='https://pplware.sapo.pt/linux/lakka-a-distro-que-transforma-o-seu-pc-numa-consola-retro/'
-fetch_body=HandleConnection(domain).start()
-parsed = HandleHref(fetch_body)
-parsedD= parsed.get_article_html_body(fetch_body)
 
-print(parsedD)
-x = Article(body=parsedD)
-#print(x.retunr_content())
+fetch_body=HandleConnection(domain).start() 
+parse_body = HandleHref(fetch_body)
+
+x = parse_body.get_article_id_href()
+print(x)
+
+#x = Article(body=parse_body.get_article_html_body(), set_id_href=parse_body.get_article_id_href())
+#print(x.check_if_works())
+
+
+
 
 
