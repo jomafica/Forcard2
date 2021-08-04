@@ -8,28 +8,19 @@ class HandleHref:
     def __init__(self, body):
         self.body = body
 
-    def get_body_parsed(self):
-        return BeautifulSoup(self.body, 'html.parser')
+    def get_body_parsed(self, body):
+        return BeautifulSoup(body, 'html.parser')
     
     # Return: {(ID_ARTICLE,HREF),(...)}
     def get_article_id_href_home(self):
         _set = set()
-        for e in self.get_body_parsed().find_all("article"):
+        for e in self.get_body_parsed(self.body).find_all("article"):
             rx = re.search(r'[^post-]+.', e['id'])
             _set.add((rx.group(0),e.a['href']))
         return _set
 
-    # Nao e necessario fazer isto! iterar SET acima criado e fazer parse de cada href
-    def get_article_id_href(self):
-        _set = set()
-        _id = self.get_body_parsed().find_all("article")[0].find_all_next('span')[1]
-        rx = re.search(r'[^more-]+.', _id['id'])
-        #_set.add((rx.group(0),_y.a['href']))
-        print(rx.group(0))
-        return _set
-
     def get_article_html_body(self):
-        return [self.get_body_parsed().find_all("article")[0]]
+        return self.get_body_parsed(self.body).find_all("article")[0]
     
     # Return: [<article>(...)</article>]
     def iter_article_set(self, articleSet):
@@ -47,5 +38,19 @@ class HandleHref:
         pass
 
 
+
+
+
+
+'''
+    # Nao e necessario fazer isto! iterar SET acima criado e fazer parse de cada href
+    def get_article_id_href(self):
+        _set = set()
+        _id = self.get_body_parsed(self.body).find_all("article")[0].find_all_next('span')[1]
+        rx = re.search(r'[^more-]+.', _id['id'])
+        #_set.add((rx.group(0),_y.a['href']))
+        print(rx.group(0))
+        return _set
+'''
 
         
