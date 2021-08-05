@@ -7,14 +7,19 @@ from retry import retry
   - System process
   - HealthCheck 
 '''
-class HandleConnection:
+class Connection():
 
-    def __init__(self, link_url, bodyContent=None):
+    '''
+    The health check need to initated at the init.
+    '''
+    def __init__(self, link_url, body_content = None):
         self.url = link_url
-        self.bodyContent = bodyContent
+        self.body_content = body_content
 
     def start(self):
-        # initiate process(create a new class for system process and call it here)
+        '''
+        initiate process(create a new class for system process and call it here)
+        '''
         if self.check_statusCode(self.url):
             return self.content_body()
         else:
@@ -23,16 +28,16 @@ class HandleConnection:
     @retry(tries=3, delay=2, backoff=15)
     def check_statusCode(self, url):
         try:
-            self.bodyContent = requests.get(url, timeout=1)
-            if self.bodyContent:
-                _status = self.bodyContent.status_code
-                if _status == 200:
+            self.body_content = requests.get(url, timeout=5)
+            if self.body_content:
+                _status = self.body_content.status_code
+                if _status == 200 or _status == 301:
                     return True
         except:
             return self.check_existence(url)
 
     def content_body(self):
-        return self.bodyContent.content
+        return self.body_content.content
 
     def check_existence(self, domain):
         try:
