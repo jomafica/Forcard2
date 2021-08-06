@@ -1,27 +1,44 @@
-
-    # Test (apagar)
-    #oldSet = {'786420', '786353', '786347', '786301', '786335'}
-    #currentSet = {'786425', '786424', '786422', '786421', '786420', '786353', '786347', '786301', '786335'}
-    #z = currentSet.difference(oldSet)
-    #print(z)
-    ################################################
-    #yz = BeautifulSoup(fetch_body, 'html.parser')
-    #y = [yz.find_all("article")[0]]
-    #print(y)
-    ################################################
-    # Test (apagar)
-    #yz = BeautifulSoup(fetch_body, 'html.parser')
-    #y = set()
-    #for e in yz.find_all("article"):
-    #    rx = re.search(r'[^post-]+.', e['id'])
-    #    y.add((rx.group(0),e.a['href']))
-    #for ih in y:
-    #    (id, href) = ih
-    #    print(id)
+import pyautogui
+from time import sleep
+screenWidth, screenHeight = pyautogui.size() 
+currentMouseX, currentMouseY = pyautogui.position()
+def sleep_time(times: int) -> sleep: return int(times)
+seconds = sleep_time(input('Time to sleep: '))
+print('To break loop press CTRL + C')
+try:
+    while True:
+        pyautogui.click()
+        print(f'Just clicked, now i will sleep {seconds} seconds')
+        sleep(seconds) 
+except KeyboardInterrupt:
+    pass
 
 
-if __name__ == "__main__":
-    main()
+ 
+    
+# Test (apagar)
+#oldSet = {'786420', '786353', '786347', '786301', '786335'}
+#currentSet = {'786425', '786424', '786422', '786421', '786420', '786353', '786347', '786301', '786335'}
+#z = currentSet.difference(oldSet)
+#print(z)
+################################################
+#yz = BeautifulSoup(fetch_body, 'html.parser')
+#y = [yz.find_all("article")[0]]
+#print(y)
+################################################
+# Test (apagar)
+#yz = BeautifulSoup(fetch_body, 'html.parser')
+#y = set()
+#for e in yz.find_all("article"):
+#    rx = re.search(r'[^post-]+.', e['id'])
+#    y.add((rx.group(0),e.a['href']))
+#for ih in y:
+#    (id, href) = ih
+#    print(id)
+
+
+#if __name__ == "__main__":
+#    main()
 
 
 
@@ -83,10 +100,59 @@ C   <h3><a href="https://pplware.sapo.pt/author/ppinto/" title="Artigos de Pedro
 '''
 
 
+'''
+class ConnectionRetry(ConnectionStatus):
+
+    @retry(tries=3, delay=2, backoff=15)
+    def check_statusCode(self, url):
+        try:
+            self.body_content = get(url, timeout=5)
+            if self.body_content:
+                _status = self.body_content.status_code
+                if _status == 200 or _status == 301:
+                    return True
+        except:
+            return self.check_existence(url)
+
+    def content_body(self):
+        return self.body_content.content
+
+    def check_existence(self, domain):
+        try:
+            _host_up = self.check_connectivity(domain)
+            if _host_up:
+                return True
+        except:
+            print("Domain does not exist")
+
+    def check_connectivity(self, domain):
+        _strip_domain = search(r'[\w+\.]*\w+\.\w+', str(domain)) 
+        try:
+            _h_name = gethostbyname(_strip_domain.group(0))
+            if _h_name:
+                _reachable = self.check_reachability(_h_name,443)
+                if _reachable:  
+                    return True
+        except:
+            print('Could not translate the domain')
+
+    def check_reachability(self, ip, port):
+        try:
+            _alive = self.retry_connection(ip, port)
+            if _alive:
+                return True
+        except:
+            print("Ip is not alive")
+
+    @retry(tries=3, delay=2, backoff=15)   
+    def retry_connection(self, ip, port):
+        with create_connection((ip,port)) as _connected:
+            if _connected:
+                _connected.close()
+                return True
+                
+    
 
 
-
-
-
-
+'''
 

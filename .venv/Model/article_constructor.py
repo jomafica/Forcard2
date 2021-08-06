@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
-import re    
+import re
+from typing import list, set   
 
 class Article(): 
 
@@ -19,25 +20,25 @@ class Article():
         return [current_page,int(self.get_body_parsed(self.body).select('a[class="page-numbers"]')[1].string.replace('.',''))]
 
     # Return: {(ID_ARTICLE,HREF),(...)} NOT ORDERED
-    def get_article_id_href_home(self):
+    def get_article_id_href_home(self) -> set:
         _set = set()
         for e in self.get_body_parsed(self.body).find_all("article"):
             rx = re.search(r'[^post-]+.', e['id'])
             _set.add((rx.group(0),e.a['href']))
         return _set
 
-    def get_article_html_body(self):
+    def get_article_html_body(self) -> list:
         return self.get_body_parsed(self.body).find_all("article")[0]
     
     # Return: [<article>(...)</article>]
-    def iter_article_set(self, article_set):
+    def iter_article_set(self, article_set) -> list:
         for element in article_set:
             (_, _href) = element
             for link in _href:
                 return self.get_article_html_body(link)
 
     # Return: {'786424', '786421', '786425'} # priorities passed need to be a set() type
-    def compare_id(self, old_set, current_set):
+    def compare_id(self, old_set, current_set) -> set:
         return current_set.difference(old_set)
     
     #Try to find a meaning for this

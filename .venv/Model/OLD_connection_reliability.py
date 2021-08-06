@@ -12,6 +12,7 @@ class Connection():
     '''
     The health check need to initated at the init.
     '''
+    
     def __init__(self, link_url, body_content = None):
         self.url = link_url
         self.body_content = body_content
