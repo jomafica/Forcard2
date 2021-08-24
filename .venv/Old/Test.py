@@ -3,7 +3,7 @@ from time import sleep
 screenWidth, screenHeight = pyautogui.size() 
 currentMouseX, currentMouseY = pyautogui.position()
 def sleep_time(times: int) -> sleep: return int(times)
-seconds = sleep_time(input('Time to sleep: '))
+seconds = sleep_time(input('Time to sleep(s): '))
 print('To break loop press CTRL + C')
 try:
     while True:

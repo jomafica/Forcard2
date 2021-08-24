@@ -1,14 +1,22 @@
 from article_constructor import Article
+from dataclasses import dataclass, field
 import re
 
+@dataclass(init=True)
 class JsonConstructor(Article):
 
-    def __init__(self, tuple_article):
-        self.tuple_article = tuple_article
-        self._id = None
-        self._href = None
-        self._body = None
-        self.jsonbody = {}
+    tuple_article: tuple
+    _id: int = None
+    _href: str = None
+    _body: str = None
+    jsonbody: dict = field(default_factory=dict)
+
+    #def __init__(self, tuple_article):
+    #    self.tuple_article = tuple_article
+    #    self._id = None
+    #    self._href = None
+    #    self._body = None
+    #    self.jsonbody = {}
 
     def json_constructor(self, id, 
             href, body):
@@ -86,12 +94,12 @@ class JsonConstructor(Article):
 Following is used to test the above class
 
 '''
-#from handleconn import HandleConnection
+#from reachable import ConnectionStatus
 #domain_1='https://pplware.sapo.pt/'
 #domain='https://pplware.sapo.pt/redes_sociais/#twitter-estabelece-parceria-com-a-reuters-e-a-ap-para-detetar-desinformacao/'
 #
-#fetch_body = HandleConnection(domain).start() 
-#parse_body = HandleHref(fetch_body)
+#fetch_body = ConnectionStatus().start(domain) 
+#parse_body = Article(domain)
 #
 ##fetch_body1 = HandleConnection(domain1).start() 
 ##parse_body1 = HandleHref(fetch_body1).get_article_id_href_home()
