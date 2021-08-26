@@ -32,7 +32,7 @@ class JsonConstructor(Article):
     def check_tuple(self):
         if self.tuple_article:
             (id, href, body) = self.tuple_article
-            if id and href and body != '' and id and href and body != None:
+            if id and href and body != '' and body != None:
                 self._id = id
                 self._href = href
                 self._body = body
@@ -47,7 +47,6 @@ class JsonConstructor(Article):
                 return self.jsonbody
         except:
             print('Html body is empty')
-            pass
     
     def _append_id_and_href(self, id, href):
         self.jsonbody['id'] = id

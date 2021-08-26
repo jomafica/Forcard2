@@ -75,75 +75,190 @@ class ConnectionStatus:
         self.status = False
 '''
 
+
+'''
+Criar state pattern here 
+
+https://refactoring.guru/design-patterns/state/python/example
+
+'''
+
+
+class ConnectionStatus():
+
+    """
+    The Context defines the interface of interest to clients. It also maintains
+    a reference to an instance of a State subclass, which represents the current
+    state of the Context.
+    """
+    _state = None
+
+    """
+    A reference to the current state of the Context.
+    """
+
+    def __init__(self, state: State) -> None:
+        self.transition_to(state)
+        self.domain: str =  None
+        self.http_code: str = None
+        self.status: bool = False
+
+    def transition_to(self, state: State):
+        """
+        The Context allows changing the State object at runtime.
+        """
+
+        print(f"Context: Transition to {type(state).__name__}")
+        self._state = state
+        self._state.context = self
+
+    def __str__(self):
+        return type(self._state).__name__
+
+    """
+    The Context delegates part of its behavior to the current State object.
+    """
+
+    def start(self, domain):
+        self._state.start1(domain)
+
+    def get_status_code(self):
+        self._state.get_status_code1()
+
+    def get_status_code(self):
+        self._state.get_status_code1()
+
+    def start_connection(self):
+        self._state.start_connection1()
+
+    def retry_connection(self):
+        self._state.retry_connection1()
+    
+    def health_check(self):
+        self._state.health_check1()
+
 class State(ABC):
 
     @property
-    def status(self):
-        return self._status
+    def context(self) -> ConnectionStatus:
+        return self._context
 
-    @status.setter
-    def status(self, stats: bool):
-        self._status = stats
+    @context.setter
+    def context(self, context: ConnectionStatus) -> None:
+        self._context = context
 
-    @property
-    def dom(self):
-        return self._dom
-
-    @dom.setter
-    def dom(self, domain: str):
-        self._dom = domain
-    
     @abstractmethod
-    def start(self):
+    def start1(self) -> None:
         pass
 
     @abstractmethod
-    def get_status_code(self):
+    def get_status_code1(self) -> None:
         pass
 
     @abstractmethod
-    def start_connection(self):
+    def start_connection1(self) -> None:
         pass
 
     @abstractmethod
-    def retry_connection(self):
+    def retry_connection1(self) -> None:
         pass
 
     @abstractmethod
-    def health_check(self):
+    def health_check1(self) -> None:
         pass
 
 class StartConnection(State):
 
-    def start(self, domain):
+    def start1(self, domain):
         if domain:
-            self._dom = domain
-            self.start_connection()
+            self.context.domain = domain
+            self.start_connection1()
 
-    def get_status_code(self):
+    def get_status_code1(self):
         try:
-            self.http_code = get(self._dom, timeout=5)
+            self.context.http_code = get(self.context.domain, timeout=5)
         except:
-            self._status = False
-            print('Lost Connection')
-            self.retry_connection()
+            self.context.status = False
+            print('Not reachable')
 
-    def start_connection(self):
-        self.get_status_code()
-        if self.http_code and self.http_code.status_code == 200 or self.http_code.status_code == 301:
-            self.http_code.close()
-            self._status = True
+    def start_connection1(self):
+        self.get_status_code1()
+        if self.context.http_code and self.context.http_code.status_code == 200 or self.context.http_code.status_code == 301:
+            self.context.http_code.close()
+            self.context.status = True
+            print(f'Inside start connection status: {self.context.status}')
+            self.context.transition_to(CurrentState())
+             
+    def retry_connection1(self): ...
+
+    def health_check1(self): ...
+
+class CurrentState(State):
+
+    def health_check1(self):
+        print('Inside Health Check def()')
+        print(f'Inside health check status: {self.context.status}')
+        self.start_connection1() 
+    
+    def start_connection1(self):
+        self.get_status_code1()
+        if self.context.http_code and self.context.http_code.status_code in [
+            200,
+            301,
+        ]:
+            self.context.http_code.close()
+            self.context.status = True
+            print('terminei segmento')
+            return
+        self.context.transition_to(RetryReconnect())
+
+    def get_status_code1(self):
+        try:
+            self.context.http_code = get(self.context.domain, timeout=5)
+        except:
+            self.context.http_code = None
+            self.context.status = False
+            print('Lost Connection')   
+
+    def start1(self): ...
+
+    def retry_connection1(self): ...
+
+class RetryReconnect(State):
 
     @retry(tries=10,
            delay=2, 
            backoff=2) 
-    def retry_connection(self):
-        is_alive = get(self._dom, timeout=5)
-        if is_alive.status_code:
-            is_alive.close()
-            self._status = True
-            self.health_check()
+    def retry_connection1(self):
+        print('trying')
+        print(self.context.domain)
+        self.context.http_code = get(self.context.domain, timeout=5)
+        if self.context.http_code.status_code:
+            self.context.http_code.close()
+            self.context.status = True
+            self.context.transition_to(CurrentState())
 
-    def health_check(self):
-        self.start_connection() 
+    def start1(self): ...
 
+    def get_status_code1(self): ...
+
+    def start_connection1(self): ...
+
+    def health_check1(self): ...
+
+
+domain='https://pplware.sapo.pt/'
+x = ConnectionStatus(StartConnection())
+x.start(domain)
+current_status = [x]
+while x.status:
+    print('Inside while loop:',x.status)
+    if x in current_status:
+        x.health_check()
+        print(x)
+    sleep(3)
+x.retry_connection()
+
+
+print('Outside while loop:',x.status)
+print('finish')
