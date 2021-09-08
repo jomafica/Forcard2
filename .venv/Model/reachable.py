@@ -1,88 +1,17 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
 from requests import get
+from enum import Enum, auto
 from retry import retry
-import logging
-from time import sleep
+# import logging # to be implemented
 
-'''
-ToDo
+class Status(Enum):
+    """ Connection status """
 
-How to test
-x = ConnectionStatus()
-try:
-    x.start('https://pplware.sapo.pt/')
-except KeyboardInterrupt:
-    ...
-
-domain='https://pplware.sapo.pt/redes_sociais/twitter-estabelece-parceria-com-a-reuters-e-a-ap-para-detetar-desinformacao/'
-connection = ConnectionStatus(StartConnection())
-connection.start_connection(domain)
-
-x = StartConnection()
-domain='https://pplware.sapo.pt/redes_sociais/twitter-estabelece-parceria-com-a-reuters-e-a-ap-para-detetar-desinformacao/'
-x.start(domain)
-
-'''
-
-'''
-class ConnectionStatus:
-
-    STATUS = False
-
-    def __init__(self):
-        self.domain = None
-        self.http_code: Response
-
-    def start(self, domain):
-        if domain:
-            self.domain = domain
-            self._start_connection()
-            if self.STATUS:
-                self._health_check()
-
-    def _get_status_code(self):
-        try:
-            self.http_code = get(self.domain, timeout=5)
-        except:
-            self.STATUS = False
-            print('Lost Connection')
-            self._retry_connection()
-
-    def _start_connection(self):
-        self._get_status_code()
-        if self.http_code and self.http_code.status_code == 200 or self.http_code.status_code == 301:
-            self.http_code.close()
-            self.STATUS = True
-
-    @retry(tries=10,
-           delay=2, 
-           backoff=2) 
-    def _retry_connection(self):
-        is_alive = get(self.domain, timeout=5)
-        if is_alive.status_code:
-            is_alive.close()
-            self.STATUS = True
-            self._health_check()
-            
-    def _health_check(self):
-        while self.STATUS:
-            print(f'Is he answering? {self.STATUS}')
-            self._start_connection() 
-            sleep(5)
-
-    def interrupt(self) -> None:
-        self.status = False
-'''
-
-
-'''
-Criar state pattern here 
-
-https://refactoring.guru/design-patterns/state/python/example
-
-'''
-
+    IDLE = auto()
+    OK = auto()
+    RECONNECTING = auto()
+    LOSTCONNECTION = auto()
 
 class ConnectionStatus():
 
@@ -99,9 +28,10 @@ class ConnectionStatus():
 
     def __init__(self, state: State) -> None:
         self.transition_to(state)
+        self.status = Status.IDLE
         self.domain: str =  None
         self.http_code: str = None
-        self.status: bool = False
+        self.info: str = None
 
     def transition_to(self, state: State):
         """
@@ -122,18 +52,11 @@ class ConnectionStatus():
     def start(self, domain):
         self._state.start1(domain)
 
-    def get_status_code(self):
-        self._state.get_status_code1()
-
-    def get_status_code(self):
-        self._state.get_status_code1()
-
-    def start_connection(self):
-        self._state.start_connection1()
 
     def retry_connection(self):
         self._state.retry_connection1()
     
+
     def health_check(self):
         self._state.health_check1()
 
@@ -152,14 +75,6 @@ class State(ABC):
         pass
 
     @abstractmethod
-    def get_status_code1(self) -> None:
-        pass
-
-    @abstractmethod
-    def start_connection1(self) -> None:
-        pass
-
-    @abstractmethod
     def retry_connection1(self) -> None:
         pass
 
@@ -174,32 +89,15 @@ class StartConnection(State):
             self.context.domain = domain
             self.start_connection1()
 
+
     def get_status_code1(self):
         try:
             self.context.http_code = get(self.context.domain, timeout=5)
         except:
-            self.context.status = False
-            print('Not reachable')
+            self.context.status = Status.LOSTCONNECTION
+        self.context.http_code = get(self.context.domain, timeout=5)
 
-    def start_connection1(self):
-        self.get_status_code1()
-        if self.context.http_code and self.context.http_code.status_code == 200 or self.context.http_code.status_code == 301:
-            self.context.http_code.close()
-            self.context.status = True
-            print(f'Inside start connection status: {self.context.status}')
-            self.context.transition_to(CurrentState())
-             
-    def retry_connection1(self): ...
 
-    def health_check1(self): ...
-
-class CurrentState(State):
-
-    def health_check1(self):
-        print('Inside Health Check def()')
-        print(f'Inside health check status: {self.context.status}')
-        self.start_connection1() 
-    
     def start_connection1(self):
         self.get_status_code1()
         if self.context.http_code and self.context.http_code.status_code in [
@@ -207,58 +105,89 @@ class CurrentState(State):
             301,
         ]:
             self.context.http_code.close()
-            self.context.status = True
-            print('terminei segmento')
-            return
-        self.context.transition_to(RetryReconnect())
+            self.context.status = Status.OK
+            self.context.transition_to(HealthCheck()) # Make this better
+             
+
+    def retry_connection1(self): ...
+    def health_check1(self): ...
+
+class HealthCheck(State):
+
+    def health_check1(self):
+        self.start_connection1()
+            
+
+    def start_connection1(self):
+        self.get_status_code1()
+        if self.context.http_code and self.context.http_code.status_code in [
+            200,
+            301,
+        ]:
+            self.context.http_code.close()
+            # logging here
+
 
     def get_status_code1(self):
         try:
             self.context.http_code = get(self.context.domain, timeout=5)
         except:
             self.context.http_code = None
-            self.context.status = False
-            print('Lost Connection')   
+            self.context.status = Status.LOSTCONNECTION
+            #print('Lost Connection') 
+            self.context.transition_to(RetryReconnection())
+               
 
     def start1(self): ...
-
     def retry_connection1(self): ...
 
-class RetryReconnect(State):
+class RetryReconnection(State):
 
     @retry(tries=10,
            delay=2, 
            backoff=2) 
     def retry_connection1(self):
-        print('trying')
-        print(self.context.domain)
+        self.context.status = Status.RECONNECTING
         self.context.http_code = get(self.context.domain, timeout=5)
         if self.context.http_code.status_code:
             self.context.http_code.close()
-            self.context.status = True
-            self.context.transition_to(CurrentState())
+            self.context.status = Status.OK
+            self.context.transition_to(HealthCheck())
 
     def start1(self): ...
-
-    def get_status_code1(self): ...
-
-    def start_connection1(self): ...
 
     def health_check1(self): ...
 
 
-domain='https://pplware.sapo.pt/'
-x = ConnectionStatus(StartConnection())
-x.start(domain)
-current_status = [x]
-while x.status:
-    print('Inside while loop:',x.status)
-    if x in current_status:
-        x.health_check()
-        print(x)
-    sleep(3)
-x.retry_connection()
 
 
-print('Outside while loop:',x.status)
-print('finish')
+
+
+""" 
+for teste porpuses 
+"""
+#import asyncio 
+#async def health_check2(taskss):
+#    while taskss.status == Status.OK:
+#        taskss.health_check()
+#        await asyncio.sleep(2)
+#    if taskss.status == Status.LOSTCONNECTION:
+#        taskss.retry_connection()
+#    if taskss.status == Status.OK:
+#        asyncio.create_task(health_check2(taskss))
+#
+#async def program(prog):
+#    while Status.OK:
+#        if prog.status != Status.OK:
+#            await asyncio.sleep(10)
+#        await asyncio.sleep(2)
+#
+#async def main(objt):
+#    await asyncio.gather(health_check2(objt), program(objt))
+#    
+#    
+#domain='https://pplware.sapo.pt/'
+#x = ConnectionStatus(StartConnection())
+#x.start(domain)
+#asyncio.run(main(x))
+#print('finish')
